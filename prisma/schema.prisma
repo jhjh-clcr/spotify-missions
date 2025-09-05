@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String?  @unique
+  createdAt     DateTime @default(now())
+  tokens        OAuthToken[]
+  completions   MissionCompletion[]
+}
+
+model OAuthToken {
+  id           String   @id @default(cuid())
+  userId       String
+  provider     String
+  accessToken  String
+  refreshToken String
+  scope        String
+  expiresAt    DateTime
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model AdminCampaign {
+  id            String   @id @default(cuid())
+  idol          String
+  releaseName   String?
+  targetTrackId String?
+  targetAlbumId String?
+  createdAt     DateTime @default(now())
+}
+
+enum MissionType {
+  PLAY_VERIFY
+  ADD_TO_PLAYLIST
+  SAVE_TRACK
+  SAVE_ALBUM
+}
+
+model Mission {
+  id               String      @id @default(cuid())
+  type             MissionType
+  targetSpotifyId  String
+  active           Boolean     @default(true)
+  windowHours      Int         @default(24)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
+
+enum CompletionStatus {
+  SUCCESS
+  FAILED
+}
+
+model MissionCompletion {
+  id          String            @id @default(cuid())
+  userId      String
+  missionId   String
+  status      CompletionStatus
+  details     Json
+  createdAt   DateTime          @default(now())
+  user        User              @relation(fields: [userId], references: [id])
+}

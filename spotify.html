@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>K-pop Duolingo — Spotify Missions Dashboard (MVP)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <style>
+    :root { --fg:#111; --bg:#fafafa; --muted:#666; --brand:#1DB954; }
+    body { margin:0; font:14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color:var(--fg); background:var(--bg); }
+    header { padding:12px 16px; border-bottom:1px solid #e9e9e9; display:flex; gap:12px; align-items:center; justify-content:space-between; }
+    h1 { font-size:16px; margin:0; }
+    button, select, input { font:inherit; padding:8px 10px; border:1px solid #ddd; border-radius:6px; background:white; }
+    button.primary { background:var(--brand); color:white; border-color:var(--brand); }
+    main { max-width:980px; margin:18px auto; padding:0 16px; display:grid; gap:16px; }
+    section { background:#fff; border:1px solid #e9e9e9; border-radius:8px; padding:12px; }
+    .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .label { color:var(--muted); font-size:12px; }
+    pre { background:#f6f8fa; padding:8px; border-radius:6px; overflow:auto; max-height:260px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    td, th { padding:6px 8px; border-bottom:1px solid #eee; text-align:left; }
+    .grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Spotify Missions Dashboard (MVP)</h1>
+    <div class="row">
+      <span class="label">Environment:</span>
+      <select id="env"><option>dev</option><option>staging</option><option>prod</option></select>
+      <button class="primary" id="connectBtn">Connect Spotify (Admin)</button>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="row">
+        <div>
+          <div class="label">Idol</div>
+          <input id="idol" placeholder="e.g., aespa"/>
+        </div>
+        <div>
+          <div class="label">Release (optional name)</div>
+          <input id="release" placeholder="e.g., Supernova"/>
+        </div>
+        <button id="searchBtn">Test Search</button>
+        <button id="setTargetBtn">Set Target</button>
+      </div>
+      <div class="label" style="margin-top:8px">Search Results (trimmed)</div>
+      <pre id="searchOut">[]</pre>
+      <div class="row">
+        <div>
+          <div class="label">Target Track ID</div>
+          <input id="trackId" placeholder="spotify track id"/>
+        </div>
+        <div>
+          <div class="label">Target Album ID</div>
+          <input id="albumId" placeholder="spotify album id"/>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h3 style="margin:0 0 8px 0;">Active Missions</h3>
+      <div class="grid">
+        <div>
+          <strong>1) Play Verification</strong><br/>
+          <span class="label">Window: last 24h</span><br/><br/>
+          <button id="verifyPlayBtn">Verify Recently Played</button>
+          <div class="label" style="margin-top:6px;">Output</div>
+          <pre id="verifyOut">{"status":"idle"}</pre>
+        </div>
+        <div>
+          <strong>2) Add to Playlist</strong><br/>
+          <div class="row" style="margin:6px 0;">
+            <button id="listPlaylistsBtn">Get My Playlists</button>
+            <select id="playlistSel"><option value="">(select playlist)</option></select>
+            <button id="createPlaylistBtn">Create "KPD Missions"</button>
+          </div>
+          <button id="addToPlaylistBtn">Add Target Track</button>
+          <div class="label" style="margin-top:6px;">Output</div>
+          <pre id="playlistOut">{"status":"idle"}</pre>
+        </div>
+        <div>
+          <strong>3) Save to Library</strong><br/>
+          <div class="row" style="margin:6px 0;">
+            <button id="saveTrackBtn">Save Track</button>
+            <button id="saveAlbumBtn">Save Album</button>
+          </div>
+          <div class="label" style="margin-top:6px;">Output</div>
+          <pre id="saveOut">{"status":"idle"}</pre>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h3 style="margin:0 0 8px 0;">Completions Log (local demo)</h3>
+      <table id="logTbl">
+        <thead><tr><th>time</th><th>mission</th><th>target_id</th><th>status</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h3 style="margin:0 0 8px 0;">Raw JSON Console (local demo)</h3>
+      <pre id="jsonOut">{"hint":"wire the buttons to your backend endpoints later"}</pre>
+    </section>
+  </main>
+
+  <script>
+    // NOTE: This is a static wireframe. Replace fetch() URLs with your real endpoints from the checklist.
+    const $ = (id)=>document.getElementById(id);
+    const log = (mission, target, status) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${new Date().toLocaleString()}</td><td>${mission}</td><td>${target||""}</td><td>${status}</td>`;
+      $("logTbl").querySelector("tbody").prepend(tr);
+    };
+    const show = (id, obj) => $(id).textContent = JSON.stringify(obj, null, 2);
+
+    $("connectBtn").onclick = () => {
+      // redirect to your /oauth/spotify/login
+      show("jsonOut", {action:"CONNECT_SPOTIFY", next:"/oauth/spotify/login"});
+      alert("In the real app, this would redirect to /oauth/spotify/login");
+    };
+
+    $("searchBtn").onclick = async () => {
+      const q = $('idol').value || 'aespa';
+      // replace with /admin/spotify/search?q=artist:"{idol}" tag:new&type=album,track&limit=5
+      show("searchOut", [{mock:true, note:"wire to /admin/spotify/search", q}]);
+    };
+
+    $("setTargetBtn").onclick = () => {
+      // In reality, you'd store to AdminCampaign and create Missions.
+      show("jsonOut", {
+        action:"SET_TARGET",
+        track_id: $('trackId').value || "(none)",
+        album_id: $('albumId').value || "(none)"
+      });
+      alert("Targets updated (demo).");
+    };
+
+    $("verifyPlayBtn").onclick = async () => {
+      const trackId = $('trackId').value || 'target_track_id';
+      // replace with GET /admin/spotify/me/recently-played?limit=50 and check match server-side
+      const found = Math.random() > 0.4; // demo randomness
+      const res = {trackId, found, window_hours:24, note:"wire to /admin/spotify/me/recently-played"};
+      show("verifyOut", res);
+      log("PLAY_VERIFY", trackId, found ? "SUCCESS":"FAILED");
+    };
+
+    $("listPlaylistsBtn").onclick = async () => {
+      // replace with GET /admin/spotify/me/playlists
+      const mock = [{id:"pl_1", name:"My K-pop"}, {id:"pl_2", name:"Gym"}];
+      const sel = $("playlistSel");
+      sel.innerHTML = '<option value="">(select playlist)</option>';
+      mock.forEach(p => {
+        const o = document.createElement('option');
+        o.value = p.id; o.textContent = `${p.name} (${p.id})`;
+        sel.appendChild(o);
+      });
+      show("playlistOut", {note:"wire to /admin/spotify/me/playlists", items:mock});
+    };
+
+    $("createPlaylistBtn").onclick = async () => {
+      // replace with POST /admin/spotify/playlists
+      const created = {id:"kpd_missions_demo", name:"KPD Missions", public:false};
+      show("playlistOut", {created});
+      const sel = $("playlistSel");
+      const o = document.createElement('option');
+      o.value = created.id; o.textContent = `${created.name} (${created.id})`;
+      sel.appendChild(o);
+      sel.value = created.id;
+    };
+
+    $("addToPlaylistBtn").onclick = async () => {
+      const pid = $("playlistSel").value || "kpd_missions_demo";
+      const trackId = $('trackId').value || 'target_track_id';
+      // replace with POST /admin/spotify/playlists/:playlist_id/items
+      const res = {playlist_id: pid, uris:[`spotify:track:${trackId}`], snapshot_id:"demo_snapshot"};
+      show("playlistOut", res);
+      log("ADD_TO_PLAYLIST", trackId, "SUCCESS");
+    };
+
+    $("saveTrackBtn").onclick = async () => {
+      const trackId = $('trackId').value || 'target_track_id';
+      // replace with PUT /admin/spotify/me/tracks
+      const res = {ids:[trackId], status:200, note:"wire to /admin/spotify/me/tracks"};
+      show("saveOut", res);
+      log("SAVE_TRACK", trackId, "SUCCESS");
+    };
+
+    $("saveAlbumBtn").onclick = async () => {
+      const albumId = $('albumId').value || 'target_album_id';
+      // replace with PUT /admin/spotify/me/albums
+      const res = {ids:[albumId], status:200, note:"wire to /admin/spotify/me/albums"};
+      show("saveOut", res);
+      log("SAVE_ALBUM", albumId, "SUCCESS");
+    };
+  </script>
+</body>
+</html>
