@@ -13,7 +13,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    console.log('Attempting token exchange with code:', code.substring(0, 10) + '...');
     const tokenData = await exchangeCodeForTokens(code);
+    console.log('Token exchange successful');
     
     // Create or find user (simplified - no real auth)
     let user = await prisma.user.findFirst({
@@ -58,8 +60,9 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.redirect(new URL('/', request.url));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Token exchange failed:', error);
+    console.error('Error details:', error.response?.data || error.message);
     return NextResponse.redirect(new URL('/?error=token_exchange_failed', request.url));
   }
 }
